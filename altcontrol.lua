@@ -181,7 +181,59 @@ if (model) then
     --         end
     --     end
     -- end)
-    
+
+    add({"orbit", "circle"}, function(...)
+    -- Extract and find the target player to orbit
+    local args = {...}
+    table.remove(args, 1)  -- Remove the command name from arguments
+    local targetName = table.concat(args, " ")  -- Combine remaining arguments into a single string
+    local target = find(targetName)  -- Use the 'find' function to locate the target player
+
+    if not target then
+        message("Target not found!")
+        return
+    end
+
+    -- Check if the target has a character and HumanoidRootPart
+    local targetHRP = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+    if not targetHRP then
+        message("Target's HumanoidRootPart not found.")
+        return
+    end
+
+    -- Retrieve the bots you want to orbit around the target
+    local found = index()
+    for i, index in ipairs(found) do
+        local bot = players:GetPlayerByUserId(accounts[index])
+        if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") then
+            local botHRP = bot.Character.HumanoidRootPart
+
+            -- Coroutine to handle the orbit movement
+            coroutine.wrap(function()
+                local angle = 0  -- Starting angle for the orbit
+                local radius = 10  -- Radius of the orbit
+
+                -- Continuous orbit loop
+                while true do
+                    if not targetHRP.Parent then break end  -- Stop if the target character is gone
+
+                    -- Calculate the new position for the bot based on the angle
+                    local x = targetHRP.Position.X + math.cos(angle) * radius
+                    local z = targetHRP.Position.Z + math.sin(angle) * radius
+                    local newPosition = Vector3.new(x, targetHRP.Position.Y, z)
+
+                    -- Update bot's position using Tween or direct CFrame setting
+                    botHRP.CFrame = CFrame.new(newPosition, targetHRP.Position)
+
+                    -- Increment angle to create the circular motion, adjusting speed with time
+                    angle = angle + math.rad(2)  -- Adjust this for faster or slower orbits
+
+                    task.wait(0.05)  -- Adjust the wait time to change orbit smoothness
+                end
+            end)()
+        end
+        end
+    end)
 
     add({ "promo", "promote", "share", "brag", "advertise", "ad" }, function(...)
         local args = {...}
