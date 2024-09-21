@@ -1,6 +1,6 @@
 local dur = tick()
 
-local prefix = "."
+local prefix = ","
 local commands, aliases = { }, { }
 
 local ver = "1.1 Stable"
@@ -182,13 +182,18 @@ if (model) then
     --     end
     -- end)
 
-    add({"orbit", "circle"}, function(...)
-    -- Extract and find the target player to orbit
-    local args = {...}
-    table.remove(args, 1)  -- Remove the command name from arguments
-    local targetName = table.concat(args, " ")  -- Combine remaining arguments into a single string
-    local target = find(targetName)  -- Use the 'find' function to locate the target player
+    -- Table to keep track of active orbit coroutines for each bot
+local orbitCoroutines = {}
 
+-- Orbit command implementation
+add({"orbit", "circle"}, function(...)
+    -- Extract arguments and find the target player to orbit
+    local args = {...}
+    table.remove(args, 1) -- Remove the command name from arguments
+    local targetName = args[1] -- The first argument is the target player's name
+    local speed = tonumber(args[2]) or 2 -- The second argument is the orbit speed (default to 2 if not specified)
+
+    local target = find(targetName) -- Use the 'find' function to locate the target player
     if not target then
         message("Target not found!")
         return
@@ -208,14 +213,19 @@ if (model) then
         if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") then
             local botHRP = bot.Character.HumanoidRootPart
 
+            -- Stop any existing orbit coroutine for this bot
+            if orbitCoroutines[bot.UserId] then
+                coroutine.close(orbitCoroutines[bot.UserId])
+            end
+
             -- Coroutine to handle the orbit movement
-            coroutine.wrap(function()
-                local angle = 0  -- Starting angle for the orbit
-                local radius = 10  -- Radius of the orbit
+            orbitCoroutines[bot.UserId] = coroutine.create(function()
+                local angle = 0 -- Starting angle for the orbit
+                local radius = 5 -- Radius of the orbit (closer to the target)
 
                 -- Continuous orbit loop
                 while true do
-                    if not targetHRP.Parent then break end  -- Stop if the target character is gone
+                    if not targetHRP.Parent then break end -- Stop if the target character is gone
 
                     -- Calculate the new position for the bot based on the angle
                     local x = targetHRP.Position.X + math.cos(angle) * radius
@@ -226,14 +236,31 @@ if (model) then
                     botHRP.CFrame = CFrame.new(newPosition, targetHRP.Position)
 
                     -- Increment angle to create the circular motion, adjusting speed with time
-                    angle = angle + math.rad(2)  -- Adjust this for faster or slower orbits
+                    angle = angle + math.rad(speed) -- Adjust speed based on user input
 
-                    task.wait(0.05)  -- Adjust the wait time to change orbit smoothness
+                    task.wait(0.05) -- Adjust the wait time to change orbit smoothness
                 end
-            end)()
+            end)
+
+            -- Start the coroutine
+            coroutine.resume(orbitCoroutines[bot.UserId])
         end
+    end
+end)
+
+-- Unorbit command to stop the orbiting action
+add({"unorbit", "stoporbit"}, function(...)
+    local found = index()
+    for _, index in ipairs(found) do
+        local bot = players:GetPlayerByUserId(accounts[index])
+        if bot and orbitCoroutines[bot.UserId] then
+            coroutine.close(orbitCoroutines[bot.UserId]) -- Stop the orbit coroutine
+            orbitCoroutines[bot.UserId] = nil
         end
-    end)
+    end
+    message("Orbit stopped.")
+end)
+
 
     add({ "promo", "promote", "share", "brag", "advertise", "ad" }, function(...)
         local args = {...}
