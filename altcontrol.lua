@@ -185,25 +185,26 @@ if (model) then
     -- List of available commands
     local commandList = {
         --"ex", "example", "debug", -- Example/Debug command
-        "rejoin", "rj", --"rej", "reconnect", "r", -- Rejoin command
-        "bring", -- Bring command
-        "line <left/right/back/front>", -- Line up bots
+        "rejoin, ", --"rj", --"rej", "reconnect", "r", -- Rejoin command
+        "bring, ", -- Bring command
+        --"line <left/right/back/front>", -- Line up bots
         --"promo", "promote", "share", "brag", "advertise", "ad", -- Promotion command
         --"index", "ingame", "online", -- Check accounts online
         --"meatballify", "meatball", "gwibard", -- Custom command
        -- "end", "stop", "quit", "exit", "close", -- Stop script
        -- "dance <1/2/3>", "groove", -- Dance command
        -- "emote <name>", "e <name>", -- Custom emote command
-        "reset", "kill", "oof", "die", -- Reset bots
-        --"say <message>", "chat <message>", "message <message>", "msg <message>", "announce <message>", -- Chat message
-        "follow <target>",-- "track", "watch", -- Follow command
+        "reset, ", --"kill", "oof", "die", -- Reset bots
+        "say <message>, ", "chat <message>", "message <message>", "msg <message>", "announce <message>", -- Chat message
+        "follow <target>, ",-- "track", "watch", -- Follow command
         --"unfollow", "untrack", "unwatch", -- Unfollow command
-        "orbit <target> <speed>", -- Orbit command
-        "unorbit", -- Stop orbiting
+        "orbit <target> <speed>, ", -- Orbit command
+        "unorbit, ", -- Stop orbiting
        -- "swimfollow <target>", -- Swim follow command
-        "ws <speed>", --"walkspeed <speed>", -- Walk speed command
+        "ws <speed>, ", --"walkspeed <speed>", -- Walk speed command
        -- "resetws", "defaultws", -- Reset walk speed command
-        --"cmds" -- Display command list
+        "cmds. ", -- Display command list
+        "More commands hidden."
     }
     
     -- Function to send a private message to the host
@@ -416,40 +417,65 @@ if (model) then
         end
     end)
 
-    local spinning = false
+    local spinningPlayers = {}
 
-    -- Spin command
-    add({ "spin", "rotate", "velocity", "vel" }, function(...)
-        print("Spin command initiated.")
-        local args = { ... }
-        table.remove(args, 1)
+    add({ "spin" }, function(target, speed)
+        local found = index()
+        local targetIndex = nil
     
-        local velocity = tonumber(args[1]) or 5
-        print("Velocity set to:", velocity)
+        -- Find the target player
+        for i, index in ipairs(found) do
+            local bot = players:GetPlayerByUserId(accounts[index])
+            if bot and bot.Name:lower() == target:lower() then
+                targetIndex = index
+                break
+            end
+        end
     
-        if model and model.Character and model.Character:FindFirstChild("HumanoidRootPart") then
-            local humanoidRootPart = model.Character.HumanoidRootPart
-            spinning = true
-    
-            coroutine.wrap(function()
-                while spinning do
-                    -- Rotate the HumanoidRootPart around the Y-axis
-                    humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(0, math.rad(velocity), 0)
-                    task.wait(0.1) -- Adjust for speed of rotation
+        -- If target is found, start spinning
+        if targetIndex then
+            local bot = players:GetPlayerByUserId(accounts[targetIndex])
+            if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") then
+                local humanoidRootPart = bot.Character.HumanoidRootPart
+                local angle = 0
+                
+                -- Check if already spinning
+                if not spinningPlayers[targetIndex] then
+                    spinningPlayers[targetIndex] = true
+                    coroutine.wrap(function()
+                        while spinningPlayers[targetIndex] do
+                            angle = angle + speed
+                            humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(0, math.rad(speed), 0)
+                            wait(0.1) -- Adjust for smoother or faster spinning
+                        end
+                    end)()
                 end
-            end)()
-            print("Spinning started.")
+            end
         else
-            print("Unable to spin: Model or HumanoidRootPart not found.")
+            print("Target not found.")
         end
     end)
     
-    -- Unspin command
-    add({ "unspin", "stopspin", "nospin" }, function()
-        spinning = false
-        print("Spinning stopped.")
+    add({ "unspin" }, function(target)
+        local found = index()
+        local targetIndex = nil
+    
+        -- Find the target player
+        for i, index in ipairs(found) do
+            local bot = players:GetPlayerByUserId(accounts[index])
+            if bot and bot.Name:lower() == target:lower() then
+                targetIndex = index
+                break
+            end
+        end
+    
+        -- Stop spinning if target is found
+        if targetIndex and spinningPlayers[targetIndex] then
+            spinningPlayers[targetIndex] = false
+        else
+            print("Target not found or not spinning.")
+        end
     end)
-
 
     
     add({ "say", "chat", "message", "msg", "announce" }, function(...)
