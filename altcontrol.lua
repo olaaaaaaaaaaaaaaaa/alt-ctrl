@@ -370,6 +370,64 @@ end)
         end
     end)
 
+    -- Table to track the original walkspeed of each bot for resetting purposes
+    local defaultWalkSpeeds = {}
+    
+    -- WalkSpeed Command Implementation
+    add({"ws", "walkspeed"}, function(...)
+        local args = {...}
+        table.remove(args, 1) -- Remove the command name from arguments
+        local speed = tonumber(args[1]) -- Convert the speed input to a number
+    
+        -- Validate the speed input
+        if not speed or speed <= 0 then
+            message("Please provide a valid positive number for speed.")
+            return
+        end
+    
+        -- Retrieve the bots you want to set the walk speed for
+        local found = index()
+        for _, index in ipairs(found) do
+            local bot = players:GetPlayerByUserId(accounts[index])
+            if bot and bot.Character then
+                local humanoid = bot.Character:FindFirstChildOfClass("Humanoid")
+    
+                if humanoid then
+                    -- Save the original walk speed if not already saved
+                    if not defaultWalkSpeeds[bot.UserId] then
+                        defaultWalkSpeeds[bot.UserId] = humanoid.WalkSpeed
+                    end
+    
+                    -- Set the new walk speed
+                    humanoid.WalkSpeed = speed
+                    message(bot.Name .. "'s walk speed set to " .. speed .. ".")
+                else
+                    message(bot.Name .. " does not have a humanoid.")
+                end
+            end
+        end
+    end)
+
+    -- Reset WalkSpeed Command to reset the walk speed to default values
+    add({"resetws", "defaultws"}, function()
+        local found = index()
+        for _, index in ipairs(found) do
+            local bot = players:GetPlayerByUserId(accounts[index])
+            if bot and bot.Character then
+                local humanoid = bot.Character:FindFirstChildOfClass("Humanoid")
+    
+                if humanoid and defaultWalkSpeeds[bot.UserId] then
+                    -- Reset to the original walk speed
+                    humanoid.WalkSpeed = defaultWalkSpeeds[bot.UserId]
+                    message(bot.Name .. "'s walk speed reset to default.")
+                else
+                    message("Cannot reset walk speed for " .. bot.Name)
+                end
+            end
+        end
+    end)
+
+    
     add({ "spin", "rotate", "velocity", "vel" }, function(...)
          local args = {...}
          table.remove(args, 1)
@@ -378,6 +436,89 @@ end)
 
 
      end)
+
+        -- Table to keep track of active swim coroutines for each bot
+    local swimCoroutines = {}
+    
+    -- Swim Follow Command Implementation
+    add({"swimfollow", "swimf"}, function(...)
+        -- Extract arguments and find the target player to swim follow
+        local args = {...}
+        table.remove(args, 1) -- Remove the command name from arguments
+        local targetName = args[1] -- The first argument is the target player's name
+    
+        local target = find(targetName) -- Use the 'find' function to locate the target player
+        if not target then
+            message("Target not found!")
+            return
+        end
+    
+        -- Check if the target has a character and HumanoidRootPart
+        local targetHRP = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+        if not targetHRP then
+            message("Target's HumanoidRootPart not found.")
+            return
+        end
+    
+        -- Retrieve the bots you want to swim follow the target
+        local found = index()
+        for i, index in ipairs(found) do
+            local bot = players:GetPlayerByUserId(accounts[index])
+            if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") then
+                local botHRP = bot.Character.HumanoidRootPart
+                local humanoid = bot.Character:FindFirstChildOfClass("Humanoid")
+    
+                -- Stop any existing swim follow coroutine for this bot
+                if swimCoroutines[bot.UserId] then
+                    coroutine.close(swimCoroutines[bot.UserId])
+                end
+    
+                -- Coroutine to handle the swim follow movement
+                swimCoroutines[bot.UserId] = coroutine.create(function()
+                    -- Play the swim animation
+                    humanoid:LoadAnimation(bot.Character:WaitForChild("Swim")):Play()
+    
+                    -- Continuous swim follow loop
+                    while true do
+                        if not targetHRP.Parent then break end -- Stop if the target character is gone
+    
+                        -- Calculate direction vector towards the target
+                        local direction = (targetHRP.Position - botHRP.Position).Unit
+    
+                        -- Update bot's position towards the target with swimming motion
+                        botHRP.CFrame = botHRP.CFrame:Lerp(CFrame.new(botHRP.Position, botHRP.Position + direction), 0.1)
+    
+                        -- Move the bot forward to simulate swimming
+                        botHRP.Velocity = direction * 8 -- Adjust speed of swimming as needed
+    
+                        task.wait(0.05) -- Adjust wait time to control movement smoothness
+                    end
+                end)
+    
+                -- Start the coroutine
+                coroutine.resume(swimCoroutines[bot.UserId])
+            end
+        end
+    end)
+
+    -- Stop swim follow command to halt the swimming action
+    add({"unswimfollow", "stopswim"}, function(...)
+        local found = index()
+        for _, index in ipairs(found) do
+            local bot = players:GetPlayerByUserId(accounts[index])
+            if bot and swimCoroutines[bot.UserId] then
+                coroutine.close(swimCoroutines[bot.UserId]) -- Stop the swim coroutine
+                swimCoroutines[bot.UserId] = nil
+                -- Stop the swimming animation
+                local humanoid = bot.Character and bot.Character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid:Move(Vector3.new(0, 0, 0), false) -- Stop the movement
+                end
+            end
+        end
+        message("Swim follow stopped.")
+    end)
+
     
     add({ "follow", "track", "watch" }, function(...)
         print("Follow command received") -- Debugging statement
