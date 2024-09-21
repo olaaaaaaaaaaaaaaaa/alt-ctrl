@@ -249,26 +249,23 @@ if (model) then
     
     -- Orbit command implementation
     add({"orbit", "circle"}, function(...)
-        -- Extract arguments and find the target player to orbit
         local args = {...}
         table.remove(args, 1) -- Remove the command name from arguments
         local targetName = args[1] -- The first argument is the target player's name
         local speed = tonumber(args[2]) or 2 -- The second argument is the orbit speed (default to 2 if not specified)
     
-        local target = find(targetName) -- Use the 'find' function to locate the target player
+        local target = find(targetName)
         if not target then
             message("Target not found!")
             return
         end
     
-        -- Check if the target has a character and HumanoidRootPart
         local targetHRP = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
         if not targetHRP then
             message("Target's HumanoidRootPart not found.")
             return
         end
     
-        -- Retrieve the bots you want to orbit around the target
         local found = index()
         for i, index in ipairs(found) do
             local bot = players:GetPlayerByUserId(accounts[index])
@@ -283,9 +280,9 @@ if (model) then
                 -- Coroutine to handle the orbit movement
                 orbitCoroutines[bot.UserId] = coroutine.create(function()
                     local angle = 0 -- Starting angle for the orbit
-                    local radius = 5 -- Radius of the orbit (closer to the target)
+                    local rotationSpeed = 2 -- Speed of the bot's rotation around its own axis
+                    local radius = 5 -- Radius of the orbit
     
-                    -- Continuous orbit loop
                     while true do
                         if not targetHRP.Parent then break end -- Stop if the target character is gone
     
@@ -294,11 +291,11 @@ if (model) then
                         local z = targetHRP.Position.Z + math.sin(angle) * radius
                         local newPosition = Vector3.new(x, targetHRP.Position.Y, z)
     
-                        -- Update bot's position using Tween or direct CFrame setting
-                        botHRP.CFrame = CFrame.new(newPosition, targetHRP.Position)
+                        -- Update bot's position and rotation
+                        botHRP.CFrame = CFrame.new(newPosition, targetHRP.Position) * CFrame.Angles(0, math.rad(angle * rotationSpeed), 0)
     
-                        -- Increment angle to create the circular motion, adjusting speed with time
-                        angle = angle + math.rad(speed) -- Adjust speed based on user input
+                        -- Increment angle to create the circular motion
+                        angle = angle + math.rad(speed)
     
                         task.wait(0.05) -- Adjust the wait time to change orbit smoothness
                     end
@@ -309,6 +306,7 @@ if (model) then
             end
         end
     end)
+
 
     -- Unorbit command to stop the orbiting action
     add({"unorbit", "stoporbit"}, function(...)
@@ -416,67 +414,6 @@ if (model) then
             end
         end
     end)
-
-    local spinningPlayers = {}
-
-    add({ "spin" }, function(target, speed)
-        local found = index()
-        local targetIndex = nil
-    
-        -- Find the target player
-        for i, index in ipairs(found) do
-            local bot = players:GetPlayerByUserId(accounts[index])
-            if bot and bot.Name:lower() == target:lower() then
-                targetIndex = index
-                break
-            end
-        end
-    
-        -- If target is found, start spinning
-        if targetIndex then
-            local bot = players:GetPlayerByUserId(accounts[targetIndex])
-            if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") then
-                local humanoidRootPart = bot.Character.HumanoidRootPart
-                local angle = 0
-                
-                -- Check if already spinning
-                if not spinningPlayers[targetIndex] then
-                    spinningPlayers[targetIndex] = true
-                    coroutine.wrap(function()
-                        while spinningPlayers[targetIndex] do
-                            angle = angle + speed
-                            humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(0, math.rad(speed), 0)
-                            wait(0.1) -- Adjust for smoother or faster spinning
-                        end
-                    end)()
-                end
-            end
-        else
-            print("Target not found.")
-        end
-    end)
-    
-    add({ "unspin" }, function(target)
-        local found = index()
-        local targetIndex = nil
-    
-        -- Find the target player
-        for i, index in ipairs(found) do
-            local bot = players:GetPlayerByUserId(accounts[index])
-            if bot and bot.Name:lower() == target:lower() then
-                targetIndex = index
-                break
-            end
-        end
-    
-        -- Stop spinning if target is found
-        if targetIndex and spinningPlayers[targetIndex] then
-            spinningPlayers[targetIndex] = false
-        else
-            print("Target not found or not spinning.")
-        end
-    end)
-
     
     add({ "say", "chat", "message", "msg", "announce" }, function(...)
         local args = {...}
