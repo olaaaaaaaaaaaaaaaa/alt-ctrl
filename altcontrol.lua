@@ -184,32 +184,32 @@ if (model) then
 
     -- List of available commands
     local commandList = {
-        ".ex", ".example", ".debug", -- Example/Debug command
-        ".rejoin", ".rj", ".rej", ".reconnect", ".r", -- Rejoin command
-        ".bring", -- Bring command
-        ".line <left/right/back/front>", -- Line up bots
-        ".promo", ".promote", ".share", ".brag", ".advertise", ".ad", -- Promotion command
-        ".index", ".ingame", ".online", -- Check accounts online
-        ".meatballify", ".meatball", ".gwibard", -- Custom command
-        ".end", ".stop", ".quit", ".exit", ".close", -- Stop script
-        ".dance <1/2/3>", ".groove", -- Dance command
-        ".wave", ".hello", -- Wave emote
-        ".cheer", ".hooray", -- Cheer emote
-        ".applaud", ".clap", -- Applaud emote
-        ".shrug", ".idk", ".confused", -- Shrug emote
-        ".point", ".pointout", ".punch", -- Point emote
-        ".laugh", ".excite", ".lol", -- Laugh emote
-        ".emote <name>", ".e <name>", -- Custom emote command
-        ".reset", ".kill", ".oof", ".die", -- Reset bots
-        ".say <message>", ".chat <message>", ".message <message>", ".msg <message>", ".announce <message>", -- Chat message
-        ".follow <target>", ".track", ".watch", -- Follow command
-        ".unfollow", ".untrack", ".unwatch", -- Unfollow command
-        ".orbit <target> <speed>", -- Orbit command
-        ".unorbit", -- Stop orbiting
-        ".swimfollow <target>", -- Swim follow command
-        ".ws <speed>", ".walkspeed <speed>", -- Walk speed command
-        ".resetws", ".defaultws", -- Reset walk speed command
-        ",cmds" -- Display command list
+        "ex", "example", "debug", -- Example/Debug command
+        "rejoin", "rj", "rej", "reconnect", "r", -- Rejoin command
+        "bring", -- Bring command
+        "line <left/right/back/front>", -- Line up bots
+        "promo", "promote", "share", "brag", "advertise", "ad", -- Promotion command
+        "index", "ingame", "online", -- Check accounts online
+        "meatballify", "meatball", "gwibard", -- Custom command
+        "end", "stop", "quit", "exit", "close", -- Stop script
+        "dance <1/2/3>", "groove", -- Dance command
+        "wave", "hello", -- Wave emote
+        "cheer", "hooray", -- Cheer emote
+        "applaud", "clap", -- Applaud emote
+        "shrug", "idk", "confused", -- Shrug emote
+        "point", "pointout", "punch", -- Point emote
+        "laugh", "excite", "lol", -- Laugh emote
+        "emote <name>", "e <name>", -- Custom emote command
+        "reset", "kill", "oof", "die", -- Reset bots
+        "say <message>", "chat <message>", "message <message>", "msg <message>", "announce <message>", -- Chat message
+        "follow <target>", "track", "watch", -- Follow command
+        "unfollow", "untrack", "unwatch", -- Unfollow command
+        "orbit <target> <speed>", -- Orbit command
+        "unorbit", -- Stop orbiting
+        "swimfollow <target>", -- Swim follow command
+        "ws <speed>", "walkspeed <speed>", -- Walk speed command
+        "resetws", "defaultws", -- Reset walk speed command
+        "cmds" -- Display command list
     }
     
     -- Function to send a private message to the host
@@ -223,7 +223,7 @@ if (model) then
     end
     
     -- Command to display all available commands in private chat
-    add({",cmds"}, function()
+    add({"cmds"}, function()
         local commandMessage = "Available Commands:\n" .. table.concat(commandList, "\n")
         sendPrivateMessageToHost(commandMessage)
     end)
