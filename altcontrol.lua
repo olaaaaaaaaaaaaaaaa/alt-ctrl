@@ -182,85 +182,150 @@ if (model) then
     --     end
     -- end)
 
-    -- Table to keep track of active orbit coroutines for each bot
-local orbitCoroutines = {}
-
--- Orbit command implementation
-add({"orbit", "circle"}, function(...)
-    -- Extract arguments and find the target player to orbit
-    local args = {...}
-    table.remove(args, 1) -- Remove the command name from arguments
-    local targetName = args[1] -- The first argument is the target player's name
-    local speed = tonumber(args[2]) or 2 -- The second argument is the orbit speed (default to 2 if not specified)
-
-    local target = find(targetName) -- Use the 'find' function to locate the target player
-    if not target then
-        message("Target not found!")
-        return
+    -- List of available commands
+    local commandList = {
+        ".ex", ".example", ".debug", -- Example/Debug command
+        ".rejoin", ".rj", ".rej", ".reconnect", ".r", -- Rejoin command
+        ".bring", -- Bring command
+        ".line <left/right/back/front>", -- Line up bots
+        ".promo", ".promote", ".share", ".brag", ".advertise", ".ad", -- Promotion command
+        ".index", ".ingame", ".online", -- Check accounts online
+        ".meatballify", ".meatball", ".gwibard", -- Custom command
+        ".end", ".stop", ".quit", ".exit", ".close", -- Stop script
+        ".dance <1/2/3>", ".groove", -- Dance command
+        ".wave", ".hello", -- Wave emote
+        ".cheer", ".hooray", -- Cheer emote
+        ".applaud", ".clap", -- Applaud emote
+        ".shrug", ".idk", ".confused", -- Shrug emote
+        ".point", ".pointout", ".punch", -- Point emote
+        ".laugh", ".excite", ".lol", -- Laugh emote
+        ".emote <name>", ".e <name>", -- Custom emote command
+        ".reset", ".kill", ".oof", ".die", -- Reset bots
+        ".say <message>", ".chat <message>", ".message <message>", ".msg <message>", ".announce <message>", -- Chat message
+        ".follow <target>", ".track", ".watch", -- Follow command
+        ".unfollow", ".untrack", ".unwatch", -- Unfollow command
+        ".orbit <target> <speed>", -- Orbit command
+        ".unorbit", -- Stop orbiting
+        ".swimfollow <target>", -- Swim follow command
+        ".ws <speed>", ".walkspeed <speed>", -- Walk speed command
+        ".resetws", ".defaultws", -- Reset walk speed command
+        ",cmds" -- Display command list
+    }
+    
+    -- Function to send a private message to the host
+    local function sendPrivateMessageToHost(messageText)
+        if model then
+            model:Kick(messageText)  -- This will kick the host, so change this to the desired method for private messaging
+            -- For actual private messaging, consider other ways such as using ReplicatedStorage events.
+        else
+            print("Host not found.")
+        end
     end
-
-    -- Check if the target has a character and HumanoidRootPart
-    local targetHRP = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
-    if not targetHRP then
-        message("Target's HumanoidRootPart not found.")
-        return
-    end
-
-    -- Retrieve the bots you want to orbit around the target
-    local found = index()
-    for i, index in ipairs(found) do
-        local bot = players:GetPlayerByUserId(accounts[index])
-        if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") then
-            local botHRP = bot.Character.HumanoidRootPart
-
-            -- Stop any existing orbit coroutine for this bot
-            if orbitCoroutines[bot.UserId] then
-                coroutine.close(orbitCoroutines[bot.UserId])
+    
+    -- Command to display all available commands in private chat
+    add({",cmds"}, function()
+        local commandMessage = "Available Commands:\n" .. table.concat(commandList, "\n")
+        sendPrivateMessageToHost(commandMessage)
+    end)
+    
+    -- Message function modification to send direct messages to the host if required
+    local message = function(res, isPrivate)
+        if isPrivate and model then
+            sendPrivateMessageToHost(res)  -- Sends private message to the host
+        elseif version() == "New" then
+            local textChannels = textChat.TextChannels
+            local RBX = textChannels.RBXGeneral
+    
+            if RBX then
+                RBX:SendAsync(tostring(res))
             end
+        else
+            local defaultChatSystemChatEvents = replicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+            local messageRequest = defaultChatSystemChatEvents:FindFirstChild("SayMessageRequest")
+    
+            messageRequest:FireServer(tostring(res), "All")
+        end
+    end
 
-            -- Coroutine to handle the orbit movement
-            orbitCoroutines[bot.UserId] = coroutine.create(function()
-                local angle = 0 -- Starting angle for the orbit
-                local radius = 5 -- Radius of the orbit (closer to the target)
-
-                -- Continuous orbit loop
-                while true do
-                    if not targetHRP.Parent then break end -- Stop if the target character is gone
-
-                    -- Calculate the new position for the bot based on the angle
-                    local x = targetHRP.Position.X + math.cos(angle) * radius
-                    local z = targetHRP.Position.Z + math.sin(angle) * radius
-                    local newPosition = Vector3.new(x, targetHRP.Position.Y, z)
-
-                    -- Update bot's position using Tween or direct CFrame setting
-                    botHRP.CFrame = CFrame.new(newPosition, targetHRP.Position)
-
-                    -- Increment angle to create the circular motion, adjusting speed with time
-                    angle = angle + math.rad(speed) -- Adjust speed based on user input
-
-                    task.wait(0.05) -- Adjust the wait time to change orbit smoothness
+    
+    -- Table to keep track of active orbit coroutines for each bot
+    local orbitCoroutines = {}
+    
+    -- Orbit command implementation
+    add({"orbit", "circle"}, function(...)
+        -- Extract arguments and find the target player to orbit
+        local args = {...}
+        table.remove(args, 1) -- Remove the command name from arguments
+        local targetName = args[1] -- The first argument is the target player's name
+        local speed = tonumber(args[2]) or 2 -- The second argument is the orbit speed (default to 2 if not specified)
+    
+        local target = find(targetName) -- Use the 'find' function to locate the target player
+        if not target then
+            message("Target not found!")
+            return
+        end
+    
+        -- Check if the target has a character and HumanoidRootPart
+        local targetHRP = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+        if not targetHRP then
+            message("Target's HumanoidRootPart not found.")
+            return
+        end
+    
+        -- Retrieve the bots you want to orbit around the target
+        local found = index()
+        for i, index in ipairs(found) do
+            local bot = players:GetPlayerByUserId(accounts[index])
+            if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") then
+                local botHRP = bot.Character.HumanoidRootPart
+    
+                -- Stop any existing orbit coroutine for this bot
+                if orbitCoroutines[bot.UserId] then
+                    coroutine.close(orbitCoroutines[bot.UserId])
                 end
-            end)
-
-            -- Start the coroutine
-            coroutine.resume(orbitCoroutines[bot.UserId])
+    
+                -- Coroutine to handle the orbit movement
+                orbitCoroutines[bot.UserId] = coroutine.create(function()
+                    local angle = 0 -- Starting angle for the orbit
+                    local radius = 5 -- Radius of the orbit (closer to the target)
+    
+                    -- Continuous orbit loop
+                    while true do
+                        if not targetHRP.Parent then break end -- Stop if the target character is gone
+    
+                        -- Calculate the new position for the bot based on the angle
+                        local x = targetHRP.Position.X + math.cos(angle) * radius
+                        local z = targetHRP.Position.Z + math.sin(angle) * radius
+                        local newPosition = Vector3.new(x, targetHRP.Position.Y, z)
+    
+                        -- Update bot's position using Tween or direct CFrame setting
+                        botHRP.CFrame = CFrame.new(newPosition, targetHRP.Position)
+    
+                        -- Increment angle to create the circular motion, adjusting speed with time
+                        angle = angle + math.rad(speed) -- Adjust speed based on user input
+    
+                        task.wait(0.05) -- Adjust the wait time to change orbit smoothness
+                    end
+                end)
+    
+                -- Start the coroutine
+                coroutine.resume(orbitCoroutines[bot.UserId])
+            end
         end
-    end
-end)
+    end)
 
--- Unorbit command to stop the orbiting action
-add({"unorbit", "stoporbit"}, function(...)
-    local found = index()
-    for _, index in ipairs(found) do
-        local bot = players:GetPlayerByUserId(accounts[index])
-        if bot and orbitCoroutines[bot.UserId] then
-            coroutine.close(orbitCoroutines[bot.UserId]) -- Stop the orbit coroutine
-            orbitCoroutines[bot.UserId] = nil
+    -- Unorbit command to stop the orbiting action
+    add({"unorbit", "stoporbit"}, function(...)
+        local found = index()
+        for _, index in ipairs(found) do
+            local bot = players:GetPlayerByUserId(accounts[index])
+            if bot and orbitCoroutines[bot.UserId] then
+                coroutine.close(orbitCoroutines[bot.UserId]) -- Stop the orbit coroutine
+                orbitCoroutines[bot.UserId] = nil
+            end
         end
-    end
-    message("Orbit stopped.")
-end)
-
+    end)
+    
 
     add({ "promo", "promote", "share", "brag", "advertise", "ad" }, function(...)
         local args = {...}
@@ -270,7 +335,7 @@ end)
         for i, index in ipairs(found) do
             local bot = players:GetPlayerByUserId(accounts[index])
             if (bot) then
-                message("Account Manager " .. ver .. "modified by Rafa")
+                message("Account Manager " .. ver .. " modified by Rafa")
                 break
             end
         end
@@ -428,14 +493,43 @@ end)
     end)
 
     
+    -- State to control spinning
+    local spinning = false
+    
+    -- Spin command
     add({ "spin", "rotate", "velocity", "vel" }, function(...)
-         local args = {...}
-         table.remove(args, 1)
+        local args = { ... }
+        table.remove(args, 1)
+    
+        -- Parse the velocity argument or set a default value
+        local velocity = tonumber(args[1]) or 5
+    
+        -- Check if the player model exists and has a HumanoidRootPart
+        if model and model.Character and model.Character:FindFirstChild("HumanoidRootPart") then
+            local humanoidRootPart = model.Character.HumanoidRootPart
+    
+            -- Set spinning to true to start the spin
+            spinning = true
+    
+            -- Create a coroutine to handle the continuous spin
+            coroutine.wrap(function()
+                while spinning do
+                    -- Rotate the character around the Y-axis by setting the CFrame
+                    humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(0, math.rad(velocity), 0)
+                    task.wait(0.1) -- Adjust this value to control the smoothness of the spin
+                end
+            end)()
+        else
+            message("Unable to spin: Model or HumanoidRootPart not found.")
+        end
+    end)
+    
+    -- Unspin command to stop spinning
+    add({ "unspin", "stopspin", "nospin" }, function()
+        -- Set spinning to false to stop the spin
+        spinning = false
+    end)
 
-         local velocity = tonumber(table.concat(args, " "))
-
-
-     end)
 
         -- Table to keep track of active swim coroutines for each bot
     local swimCoroutines = {}
@@ -516,7 +610,6 @@ end)
                 end
             end
         end
-        message("Swim follow stopped.")
     end)
 
     
@@ -618,7 +711,8 @@ end)
         end)
     end
 
-    message("Account Manager loaded in " .. string.format("%.2f", tick() - dur) .. " seconds.")
+   -- message("Account Manager loaded in " .. string.format("%.2f", tick() - dur) .. " seconds.")
+    message("Account Manager modified by Rafa.")
 else
     message("Host not found, cannot use Account Manager.")
 end
