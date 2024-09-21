@@ -492,14 +492,15 @@ if (model) then
 
     -- Spin command
     add({ "spin", "rotate", "velocity", "vel" }, function(...)
+        message("debug 1")
         local args = { ... }
         table.remove(args, 1)
     
         local velocity = tonumber(args[1]) or 5
-    
+        message("debug 2")
         if model and model.Character and model.Character:FindFirstChild("HumanoidRootPart") then
             local humanoidRootPart = model.Character.HumanoidRootPart
-    
+            message("debug 3")
             spinning = true
     
             coroutine.wrap(function()
@@ -508,6 +509,7 @@ if (model) then
                     task.wait(0.1) 
                 end
             end)()
+                message("end of debug")
         else
             message("Unable to spin: Model or HumanoidRootPart not found.")
         end
