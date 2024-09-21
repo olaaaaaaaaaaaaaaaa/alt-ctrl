@@ -488,30 +488,24 @@ if (model) then
     end)
 
     
-    -- State to control spinning
-    local spinning = false
-    
+   local spinning = false
+
     -- Spin command
     add({ "spin", "rotate", "velocity", "vel" }, function(...)
         local args = { ... }
         table.remove(args, 1)
     
-        -- Parse the velocity argument or set a default value
         local velocity = tonumber(args[1]) or 5
     
-        -- Check if the player model exists and has a HumanoidRootPart
         if model and model.Character and model.Character:FindFirstChild("HumanoidRootPart") then
             local humanoidRootPart = model.Character.HumanoidRootPart
     
-            -- Set spinning to true to start the spin
             spinning = true
     
-            -- Create a coroutine to handle the continuous spin
             coroutine.wrap(function()
                 while spinning do
-                    -- Rotate the character around the Y-axis by setting the CFrame
                     humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(0, math.rad(velocity), 0)
-                    task.wait(0.1) -- Adjust this value to control the smoothness of the spin
+                    task.wait(0.1) 
                 end
             end)()
         else
@@ -519,11 +513,11 @@ if (model) then
         end
     end)
     
-    -- Unspin command to stop spinning
+    -- Unspin command
     add({ "unspin", "stopspin", "nospin" }, function()
-        -- Set spinning to false to stop the spin
         spinning = false
     end)
+
 
 
         -- Table to keep track of active swim coroutines for each bot
