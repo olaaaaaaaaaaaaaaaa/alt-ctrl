@@ -216,11 +216,7 @@ if (model) then
         end
     end
     
-    -- Command to display all available commands in private chat
-    add({"cmds"}, function()
-        local commandMessage = "Available Commands:\n" .. table.concat(commandList, "\n")
-        message(commandMessage)
-    end)
+
     
     -- Message function modification to send direct messages to the host if required
     local message = function(res, isPrivate)
@@ -241,6 +237,11 @@ if (model) then
         end
     end
 
+    -- Command to display all available commands in private chat
+    add({"cmds"}, function()
+        local commandMessage = "Available Commands:\n" .. table.concat(commandList, "\n")
+        message(commandMessage)
+    end)
     
     -- Table to keep track of active orbit coroutines for each bot
     local orbitCoroutines = {}
