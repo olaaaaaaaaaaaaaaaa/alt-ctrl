@@ -433,7 +433,9 @@ if (model) then
     
             coroutine.wrap(function()
                 while spinning do
-                    humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(0, math.rad(velocity), 0)
+                    local position = humanoidRootPart.Position
+                    humanoidRootPart.CFrame = CFrame.new(position) * CFrame.Angles(0, math.rad(velocity), 0)
+                    print("Spinning...")
                     task.wait(0.1) 
                 end
             end)()
@@ -447,6 +449,7 @@ if (model) then
     add({ "unspin", "stopspin", "nospin" }, function()
         spinning = false
     end)
+
 
     
     add({ "say", "chat", "message", "msg", "announce" }, function(...)
