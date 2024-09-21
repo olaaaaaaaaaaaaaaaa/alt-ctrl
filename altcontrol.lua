@@ -270,7 +270,7 @@ end)
         for i, index in ipairs(found) do
             local bot = players:GetPlayerByUserId(accounts[index])
             if (bot) then
-                message("Account Manager " .. ver .. " by Mr. Suno.")
+                message("Account Manager " .. ver .. "modified by Rafa")
                 break
             end
         end
@@ -370,14 +370,14 @@ end)
         end
     end)
 
-    -- add({ "spin", "rotate", "velocity", "vel" }, function(...)
-    --     local args = {...}
-    --     table.remove(args, 1)
+    add({ "spin", "rotate", "velocity", "vel" }, function(...)
+         local args = {...}
+         table.remove(args, 1)
 
-    --     local velocity = tonumber(table.concat(args, " "))
+         local velocity = tonumber(table.concat(args, " "))
 
 
-    -- end)
+     end)
     
     add({ "follow", "track", "watch" }, function(...)
         print("Follow command received") -- Debugging statement
