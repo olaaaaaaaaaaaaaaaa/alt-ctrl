@@ -417,29 +417,28 @@ if (model) then
     end)
 
     local spinning = false
-    
+
     -- Spin command
     add({ "spin", "rotate", "velocity", "vel" }, function(...)
-        print("debug 1")
+        print("Spin command initiated.")
         local args = { ... }
         table.remove(args, 1)
     
         local velocity = tonumber(args[1]) or 5
-        print("debug 2")
+        print("Velocity set to:", velocity)
+    
         if model and model.Character and model.Character:FindFirstChild("HumanoidRootPart") then
             local humanoidRootPart = model.Character.HumanoidRootPart
-            print("debug 3")
             spinning = true
     
             coroutine.wrap(function()
                 while spinning do
-                    local position = humanoidRootPart.Position
-                    humanoidRootPart.CFrame = CFrame.new(position) * CFrame.Angles(0, math.rad(velocity), 0)
-                    print("Spinning...")
-                    task.wait(0.1) 
+                    -- Rotate the HumanoidRootPart around the Y-axis
+                    humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(0, math.rad(velocity), 0)
+                    task.wait(0.1) -- Adjust for speed of rotation
                 end
             end)()
-            print("end of debug")
+            print("Spinning started.")
         else
             print("Unable to spin: Model or HumanoidRootPart not found.")
         end
@@ -448,6 +447,7 @@ if (model) then
     -- Unspin command
     add({ "unspin", "stopspin", "nospin" }, function()
         spinning = false
+        print("Spinning stopped.")
     end)
 
 
