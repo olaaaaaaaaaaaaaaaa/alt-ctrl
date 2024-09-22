@@ -185,8 +185,8 @@ if (model) then
     -- List of available commands
     local commandList = {
         --"ex", "example", "debug", -- Example/Debug command
-        "rejoin; ", --"rj", --"rej", "reconnect", "r", -- Rejoin command
-        "bring; ", -- Bring command
+        "rejoin ", --"rj", --"rej", "reconnect", "r", -- Rejoin command
+        "bring ", -- Bring command
         --"line <left/right/back/front>", -- Line up bots
         --"promo", "promote", "share", "brag", "advertise", "ad", -- Promotion command
         --"index", "ingame", "online", -- Check accounts online
@@ -194,17 +194,16 @@ if (model) then
        -- "end", "stop", "quit", "exit", "close", -- Stop script
        -- "dance <1/2/3>", "groove", -- Dance command
        -- "emote <name>", "e <name>", -- Custom emote command
-        "reset; ", --"kill", "oof", "die", -- Reset bots
-        "say <message>; ", --"chat <message>", "message <message>", "msg <message>", "announce <message>", -- Chat message
-        "follow <target>: ",-- "track", "watch", -- Follow command
+        "reset ", --"kill", "oof", "die", -- Reset bots
+        "say <message> ", --"chat <message>", "message <message>", "msg <message>", "announce <message>", -- Chat message
+        "follow <target> ",-- "track", "watch", -- Follow command
         --"unfollow", "untrack", "unwatch", -- Unfollow command
-        "orbit <target> <speed>; ", -- Orbit command
-        "unorbit; ", -- Stop orbiting
+        "orbit <target> <speed> ", -- Orbit command
+        "unorbit ", -- Stop orbiting
        -- "swimfollow <target>", -- Swim follow command
-        "ws <speed>; ", --"walkspeed <speed>", -- Walk speed command
+        "ws <speed> ", --"walkspeed <speed>", -- Walk speed command
        -- "resetws", "defaultws", -- Reset walk speed command
-        "cmds. ", -- Display command list
-        "More commands hidden."
+        "cmds ", -- Display command list
     }
     
     -- Function to send a private message to the host
@@ -244,61 +243,6 @@ if (model) then
         message(commandMessage)
     end)
 
-    -- State variables to keep track of active commands
-    local states = {
-        spin = false,
-    }
-    
-    -- Helper function to get player instances by user IDs
-    local function getPlayerByUserId(userId)
-        return players:GetPlayerByUserId(userId)
-    end
-    
-   -- Function to make bots swim randomly
-    add({"swim"}, function()
-        print("Swim command received")
-        states.swim = true
-    
-        local found = index()
-        if #found == 0 then
-            message("No accounts available to swim.")
-            return
-        end
-    
-        -- Iterate over the bots found in the index
-        for _, index in ipairs(found) do
-            local bot = getPlayerByUserId(accounts[index])
-            if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") and bot.Character:FindFirstChildOfClass("Humanoid") then
-                -- Wrap the bot swimming behavior in a coroutine
-                coroutine.wrap(function()
-                    local botHumanoid = bot.Character:FindFirstChildOfClass("Humanoid")
-                    
-                    -- Set the humanoid state to swimming
-                    botHumanoid:ChangeState(Enum.HumanoidStateType.Swimming)
-    
-                    -- Keep swimming while the swim state is active
-                    while states.swim do
-                        -- Ensure the bot remains in a swimming state
-                        botHumanoid:ChangeState(Enum.HumanoidStateType.Swimming)
-                        task.wait(0.1) -- Adjust delay as needed for swimming responsiveness
-                    end
-                end)()
-            else
-                print("Bot character is missing necessary parts or humanoid.")
-            end
-        end
-        message("Bots are now swimming.")
-    end)
-    
-    -- Function to stop swimming
-    add({"stopswim"}, function()
-        print("Stop swim command received")
-        states.swim = false
-        message("Bots have stopped swimming.")
-    end)
-
-
-    
     -- Function to make bots spin continuously
     add({"spin"}, function()
         print("Spin command received")
@@ -333,8 +277,6 @@ if (model) then
         states.spin = false
         message("Bots have stopped spinning.")
     end)
-
-
     
     -- Table to keep track of active orbit coroutines for each bot
     local orbitCoroutines = {}
@@ -578,6 +520,7 @@ if (model) then
         end
     end)
     
+    -- Follow player Command to follow the player
     add({ "follow", "track", "watch" }, function(...)
         print("Follow command received") -- Debugging statement
         states.track = true
@@ -607,9 +550,10 @@ if (model) then
             if bot and bot.Character and bot.Character.HumanoidRootPart then
                 coroutine.wrap(function()
                     while states.track do
+                        -- Recalculate path frequently based on current position
                         local path = pathfinding:CreatePath()
                         path:ComputeAsync(bot.Character.HumanoidRootPart.Position, target.Character.HumanoidRootPart.Position)
-                        
+    
                         local waypoints = path:GetWaypoints()
                         if not waypoints or #waypoints == 0 then
                             message("No waypoints found for path.") -- Notify if no path is generated
@@ -617,12 +561,23 @@ if (model) then
                             break
                         end
     
+                        -- Iterate through the waypoints and dynamically update the path
                         for _, waypoint in ipairs(waypoints) do
+                            if not states.track then break end -- Exit if tracking is stopped
+                            
+                            -- Recheck target's position before moving
+                            if (target.Character and target.Character.HumanoidRootPart) then
+                                -- Compute the path again to update the target's latest position
+                                path:ComputeAsync(bot.Character.HumanoidRootPart.Position, target.Character.HumanoidRootPart.Position)
+                                waypoints = path:GetWaypoints()
+                            end
+                            
                             bot.Character.Humanoid:MoveTo(waypoint.Position)
                             bot.Character.Humanoid.MoveToFinished:Wait()
                         end
-    
-                        task.wait()
+                        
+                        -- Small wait to avoid overloading
+                        task.wait(0.1)
                     end
                 end)()
             else
@@ -631,13 +586,14 @@ if (model) then
             end
         end
     end)
-
-    add({ "undance", "nodance", "nd", "stopdance" }, function()
-        localPlayer.Character.Humanoid.Jump = true
-    end)
-
+    
     add({ "unfollow", "untrack", "unwatch" }, function()
         states.track = false
+    end)
+
+    
+    add({ "undance", "nodance", "nd", "stopdance" }, function()
+        localPlayer.Character.Humanoid.Jump = true
     end)
 
     local response = function(input: string)
