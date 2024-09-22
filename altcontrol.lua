@@ -237,11 +237,7 @@ if (model) then
         end
     end
 
-    -- Command to display all available commands in private chat
-    add({"cmds"}, function()
-        local commandMessage = "Available Commands:\n" .. table.concat(commandList, "\n")
-        message(commandMessage)
-    end)
+
 
     -- Function to make bots spin continuously
     add({"spin"}, function()
@@ -501,6 +497,12 @@ if (model) then
         end
     end)
 
+    -- Command to display all available commands in private chat
+    add({"cmds"}, function()
+        local commandMessage = "Available Commands:\n" .. table.concat(commandList, "\n")
+        message(commandMessage)
+    end)
+    
     -- Reset WalkSpeed Command to reset the walk speed to default values
     add({"resetws", "defaultws"}, function()
         local found = index()
