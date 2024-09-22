@@ -243,6 +243,96 @@ if (model) then
         local commandMessage = "Available Commands:\n" .. table.concat(commandList, "\n")
         message(commandMessage)
     end)
+
+    -- Command to make bots swim follow the player
+    add({"swimfollow"}, function()
+        print("Swimfollow command received") -- Debugging statement
+        states.swimfollow = true
+    
+        local found = index()
+        if #found == 0 then
+            message("No accounts available to swim follow.") -- If no accounts are found
+            print("No accounts found") -- Debugging statement
+            return
+        end
+    
+        local leader = players:GetPlayerByUserId(leaders[1]) -- Gets the first leader's UserId
+        if not leader or not leader.Character or not leader.Character:FindFirstChild("HumanoidRootPart") then
+            message("Leader is missing or not in the game.")
+            print("Leader not found or missing parts") -- Debugging statement
+            return
+        end
+    
+        local leaderHRP = leader.Character.HumanoidRootPart
+        print("Bots are now swim following the leader") -- Debugging statement
+    
+        for _, index in ipairs(found) do
+            local bot = players:GetPlayerByUserId(accounts[index])
+            if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") then
+                coroutine.wrap(function()
+                    while states.swimfollow do
+                        local botHRP = bot.Character.HumanoidRootPart
+                        botHRP.CFrame = CFrame.new(botHRP.Position, leaderHRP.Position) -- Orient bot towards leader
+                        botHRP.Velocity = (leaderHRP.Position - botHRP.Position).unit * 10 -- Adjust velocity to follow leader
+                        task.wait(0.1)
+                    end
+                end)()
+            else
+                message("Bot character is missing necessary parts.")
+                print("Bot humanoid root part missing") -- Debugging statement
+            end
+        end
+    end)
+    
+    -- Command to stop swim following
+    add({"stopswimfollow"}, function()
+        print("Stop swimfollow command received") -- Debugging statement
+        states.swimfollow = false
+        message("Bots have stopped swim following.") -- Notify that swim following has stopped
+    end)
+    
+    -- Function to make bots spin continuously
+    add({"spin"}, function()
+        print("Spin command received") -- Debugging statement
+        states.spin = true
+    
+        local found = index()
+        if #found == 0 then
+            message("No accounts available to spin.") -- If no accounts are found
+            print("No accounts found") -- Debugging statement
+            return
+        end
+    
+        print("Spinning bots") -- Debugging statement
+    
+        for _, index in ipairs(found) do
+            local bot = players:GetPlayerByUserId(accounts[index])
+            if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") then
+                coroutine.wrap(function()
+                    local botHRP = bot.Character.HumanoidRootPart
+    
+                    while states.spin do
+                        -- Rotate the bot around its vertical axis
+                        botHRP.CFrame = botHRP.CFrame * CFrame.Angles(0, math.rad(10), 0)  -- Adjust the rotation speed by changing the angle (10 degrees here)
+    
+                        -- Add a short delay between spins
+                        task.wait(0.05)
+                    end
+                end)()
+            else
+                message("Bot character is missing necessary parts.") -- Notify if there are missing components
+                print("Bot humanoid root part missing") -- Debugging statement
+            end
+        end
+    end)
+    
+    -- Function to stop the spinning when required
+    add({"stopspin"}, function()
+        print("Stop spin command received") -- Debugging statement
+        states.spin = false
+        message("Bots have stopped spinning.") -- Notify that spinning has stopped
+    end)
+
     
     -- Table to keep track of active orbit coroutines for each bot
     local orbitCoroutines = {}
@@ -584,8 +674,7 @@ if (model) then
         end)
     end
 
-   -- message("Account Manager loaded in " .. string.format("%.2f", tick() - dur) .. " seconds.")
-   -- message("Account Manager modified by Rafa.")
+    message("Account Manager modified by Rafa loaded in " .. string.format("%.2f", tick() - dur) .. " seconds.")
 else
     message("Host not found, cannot use Account Manager.")
 end
