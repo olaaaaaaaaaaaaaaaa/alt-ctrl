@@ -3,7 +3,7 @@ local dur = tick()
 local prefix = ","
 local commands, aliases = { }, { }
 
-local ver = "1.1"
+local ver = "2"
 
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local textChat = game:GetService("TextChatService")
