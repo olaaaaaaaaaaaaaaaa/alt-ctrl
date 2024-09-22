@@ -287,7 +287,8 @@ if (model) then
         table.remove(args, 1) -- Remove the command name from arguments
         local targetName = args[1] -- The first argument is the target player's name
         local speed = tonumber(args[2]) or 2 -- The second argument is the orbit speed (default to 2 if not specified)
-    
+        local radius = tonumber(args[3]) or 5 -- The third argument is the orbit radius (default to 5 if not specified)
+            
         local target = find(targetName)
         if not target then
             message("Target not found!")
@@ -315,7 +316,6 @@ if (model) then
                 orbitCoroutines[bot.UserId] = coroutine.create(function()
                     local angle = 0 -- Starting angle for the orbit
                     local rotationSpeed = 2 -- Speed of the bot's rotation around its own axis
-                    local radius = 5 -- Radius of the orbit
     
                     while true do
                         if not targetHRP.Parent then break end -- Stop if the target character is gone
