@@ -246,7 +246,6 @@ if (model) then
 
     -- State variables to keep track of active commands
     local states = {
-        swimfollow = false,
         spin = false,
     }
     
@@ -255,67 +254,49 @@ if (model) then
         return players:GetPlayerByUserId(userId)
     end
     
-    -- Command to make bots swim follow the player
-    add({"swimfollow"}, function()
-        print("Swimfollow command received")
-        states.swimfollow = true
+   -- Function to make bots swim randomly
+    add({"swim"}, function()
+        print("Swim command received")
+        states.swim = true
     
         local found = index()
         if #found == 0 then
-            message("No accounts available to swim follow.")
+            message("No accounts available to swim.")
             return
         end
-    
-        -- Get the leader (first player in the leaders list)
-        local leader = getPlayerByUserId(leaders[1])
-        if not leader or not leader.Character or not leader.Character:FindFirstChild("HumanoidRootPart") then
-            message("Leader is missing or not in the game.")
-            return
-        end
-    
-        -- Get the leader's humanoid root part
-        local leaderHRP = leader.Character.HumanoidRootPart
     
         -- Iterate over the bots found in the index
         for _, index in ipairs(found) do
             local bot = getPlayerByUserId(accounts[index])
             if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") and bot.Character:FindFirstChildOfClass("Humanoid") then
-                -- Wrap the bot movement in a coroutine
+                -- Wrap the bot swimming behavior in a coroutine
                 coroutine.wrap(function()
-                    local botHRP = bot.Character.HumanoidRootPart
                     local botHumanoid = bot.Character:FindFirstChildOfClass("Humanoid")
                     
                     -- Set the humanoid state to swimming
                     botHumanoid:ChangeState(Enum.HumanoidStateType.Swimming)
     
-                    -- Keep updating the bot's position while swimfollow is active
-                    while states.swimfollow and botHumanoid:GetState() == Enum.HumanoidStateType.Swimming do
-                        -- Calculate the direction vector from the bot to the leader
-                        local direction = (leaderHRP.Position - botHRP.Position).unit
-    
-                        -- Move the bot towards the leader
-                        botHRP.Velocity = direction * 10 -- Adjust speed here as needed
-                        botHRP.CFrame = CFrame.new(botHRP.Position, leaderHRP.Position) -- Make bot face the leader
-    
-                        task.wait(0.1) -- Adjust delay as needed for responsiveness
+                    -- Keep swimming while the swim state is active
+                    while states.swim do
+                        -- Ensure the bot remains in a swimming state
+                        botHumanoid:ChangeState(Enum.HumanoidStateType.Swimming)
+                        task.wait(0.1) -- Adjust delay as needed for swimming responsiveness
                     end
-    
-                    -- Stop the bot's velocity when swimfollow is stopped
-                    botHRP.Velocity = Vector3.new(0, 0, 0)
                 end)()
             else
                 print("Bot character is missing necessary parts or humanoid.")
             end
         end
-        message("Bots are now swim following the leader.")
+        message("Bots are now swimming.")
     end)
     
-    -- Function to stop swim following
-    add({"stopswimfollow"}, function()
-        print("Stop swimfollow command received")
-        states.swimfollow = false
-        message("Bots have stopped swim following.")
+    -- Function to stop swimming
+    add({"stopswim"}, function()
+        print("Stop swim command received")
+        states.swim = false
+        message("Bots have stopped swimming.")
     end)
+
 
     
     -- Function to make bots spin continuously
@@ -440,7 +421,7 @@ if (model) then
         for i, index in ipairs(found) do
             local bot = players:GetPlayerByUserId(accounts[index])
             if (bot) then
-                message("Account Manager " .. ver .. " modified by Rafa")
+                message("Account Manager version " .. ver .. " modified by Rafa")
                 break
             end
         end
