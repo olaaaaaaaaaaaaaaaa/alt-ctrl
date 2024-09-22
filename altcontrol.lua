@@ -266,38 +266,57 @@ if (model) then
             return
         end
     
+        -- Get the leader (first player in the leaders list)
         local leader = getPlayerByUserId(leaders[1])
         if not leader or not leader.Character or not leader.Character:FindFirstChild("HumanoidRootPart") then
             message("Leader is missing or not in the game.")
             return
         end
     
+        -- Get the leader's humanoid root part
         local leaderHRP = leader.Character.HumanoidRootPart
     
+        -- Iterate over the bots found in the index
         for _, index in ipairs(found) do
             local bot = getPlayerByUserId(accounts[index])
-            if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") then
+            if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") and bot.Character:FindFirstChildOfClass("Humanoid") then
+                -- Wrap the bot movement in a coroutine
                 coroutine.wrap(function()
                     local botHRP = bot.Character.HumanoidRootPart
-                    while states.swimfollow do
-                        botHRP.CFrame = CFrame.new(botHRP.Position, leaderHRP.Position) -- Make bot face leader
-                        botHRP.Velocity = (leaderHRP.Position - botHRP.Position).unit * 10 -- Follow with swim motion
-                        task.wait(0.1)
+                    local botHumanoid = bot.Character:FindFirstChildOfClass("Humanoid")
+                    
+                    -- Set the humanoid state to swimming
+                    botHumanoid:ChangeState(Enum.HumanoidStateType.Swimming)
+    
+                    -- Keep updating the bot's position while swimfollow is active
+                    while states.swimfollow and botHumanoid:GetState() == Enum.HumanoidStateType.Swimming do
+                        -- Calculate the direction vector from the bot to the leader
+                        local direction = (leaderHRP.Position - botHRP.Position).unit
+    
+                        -- Move the bot towards the leader
+                        botHRP.Velocity = direction * 10 -- Adjust speed here as needed
+                        botHRP.CFrame = CFrame.new(botHRP.Position, leaderHRP.Position) -- Make bot face the leader
+    
+                        task.wait(0.1) -- Adjust delay as needed for responsiveness
                     end
+    
+                    -- Stop the bot's velocity when swimfollow is stopped
+                    botHRP.Velocity = Vector3.new(0, 0, 0)
                 end)()
             else
-                print("Bot character is missing necessary parts.")
+                print("Bot character is missing necessary parts or humanoid.")
             end
         end
         message("Bots are now swim following the leader.")
     end)
     
-    -- Command to stop swim following
+    -- Function to stop swim following
     add({"stopswimfollow"}, function()
         print("Stop swimfollow command received")
         states.swimfollow = false
         message("Bots have stopped swim following.")
     end)
+
     
     -- Function to make bots spin continuously
     add({"spin"}, function()
