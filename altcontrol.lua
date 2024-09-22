@@ -575,9 +575,6 @@ if (model) then
                             bot.Character.Humanoid:MoveTo(waypoint.Position)
                             bot.Character.Humanoid.MoveToFinished:Wait()
                         end
-                        
-                        -- Small wait to avoid overloading
-                        task.wait(0.1)
                     end
                 end)()
             else
