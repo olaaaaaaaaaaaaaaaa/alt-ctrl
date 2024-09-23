@@ -487,10 +487,11 @@ if (model) then
             end
         end
     end)
-    -- Command to make the bot stand behind the target
+
+    -- Command to make the bot teleport and float behind the target
     add({ "stand" }, function(...)
         print("Stand command received") -- Debugging statement
-        states.track = true  -- Enable tracking state to initiate movement
+        states.track = true  -- Enable tracking state
     
         local args = {...}
         table.remove(args, 1)
@@ -510,26 +511,27 @@ if (model) then
             return
         end
     
-        print("Standing behind target:", target.Name) -- Debugging statement
+        print("Standing and teleporting behind target:", target.Name) -- Debugging statement
     
         for _, index in ipairs(found) do
             local bot = players:GetPlayerByUserId(accounts[index])
             if bot and bot.Character and bot.Character.HumanoidRootPart then
                 coroutine.wrap(function()
                     while states.track do
+                        -- Get the target's position and orientation
                         local targetPos = target.Character.HumanoidRootPart.Position
-                        local offsetPos = targetPos - target.Character.HumanoidRootPart.CFrame.LookVector * 3 -- Keep a fixed distance behind
-    
-                        -- Floating animation variables
+                        local behindPos = targetPos - target.Character.HumanoidRootPart.CFrame.LookVector * 3 -- Fixed distance behind
                         local floatHeight = 2  -- Height of floating above the ground
                         local floatSpeed = 2   -- Speed of the bobbing effect
-                        local offset = Vector3.new(0, math.sin(tick() * floatSpeed) * 0.5 + floatHeight, 0)  -- Oscillate up and down
+                        local bobbingOffset = Vector3.new(0, math.sin(tick() * floatSpeed) * 0.5 + floatHeight, 0)  -- Floating effect
     
-                        -- Move the bot to the position with floating effect
-                        bot.Character.Humanoid:MoveTo(offsetPos + offset)
-                        bot.Character.Humanoid.MoveToFinished:Wait()
+                        -- Calculate the final position for the bot with the floating effect
+                        local desiredPosition = behindPos + bobbingOffset
     
-                        task.wait(0.1)  -- Small delay to keep it responsive
+                        -- Teleport the bot to the desired position and face the target
+                        bot.Character.HumanoidRootPart.CFrame = CFrame.new(desiredPosition, targetPos)
+    
+                        task.wait(0.1)  -- Small delay for frequent teleportation, keeping the movement smooth
                     end
                 end)()
             else
@@ -538,7 +540,7 @@ if (model) then
             end
         end
     end)
-
+    
     -- Follow player Command to follow the player
     add({ "follow", "track", "watch" }, function(...)
         print("Follow command received") -- Debugging statement
