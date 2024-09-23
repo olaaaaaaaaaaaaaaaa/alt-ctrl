@@ -488,21 +488,10 @@ if (model) then
         end
     end)
 
-    -- Command to make the bot teleport and float behind the target
-    add({ "stand" }, function(...)
+    -- Command to make the bot teleport and float behind the host
+    add({ "stand" }, function()
         print("Stand command received") -- Debugging statement
         states.track = true  -- Enable tracking state
-    
-        local args = {...}
-        table.remove(args, 1)
-    
-        local target = find(tostring(table.concat(args, " ")))
-    
-        if not target then
-            message("Target not found.") -- Notify if the target isn't found
-            print("Target not found") -- Debugging statement
-            return
-        end
     
         local found = index()
         if #found == 0 then
@@ -511,27 +500,25 @@ if (model) then
             return
         end
     
-        print("Standing and teleporting behind target:", target.Name) -- Debugging statement
+        print("Standing and teleporting behind the host") -- Debugging statement
     
-        for _, index in ipairs(found) do
+        for i, index in ipairs(found) do
             local bot = players:GetPlayerByUserId(accounts[index])
             if bot and bot.Character and bot.Character.HumanoidRootPart then
                 coroutine.wrap(function()
                     while states.track do
-                        -- Get the target's position and orientation
-                        local targetPos = target.Character.HumanoidRootPart.Position
-                        local behindPos = targetPos - target.Character.HumanoidRootPart.CFrame.LookVector * 3 -- Fixed distance behind
-                        local floatHeight = 2  -- Height of floating above the ground
-                        local floatSpeed = 2   -- Speed of the bobbing effect
-                        local bobbingOffset = Vector3.new(0, math.sin(tick() * floatSpeed) * 0.5 + floatHeight, 0)  -- Floating effect
+                        -- Calculate position behind the host with slight floating effect
+                        local hostPos = model.Character.HumanoidRootPart.CFrame
+                        local offset = CFrame.new((i - (#found / 2) - 0.5) * 4, math.sin(tick() * 2) * 0.5 + 2, -3) -- Adjust floating height and offset
     
-                        -- Calculate the final position for the bot with the floating effect
-                        local desiredPosition = behindPos + bobbingOffset
+                        -- Tween the bot smoothly to the position behind the host
+                        tween:Create(
+                            bot.Character.HumanoidRootPart,
+                            TweenInfo.new(0.25, Enum.EasingStyle.Sine),
+                            { CFrame = hostPos * offset }
+                        ):Play()
     
-                        -- Teleport the bot to the desired position and face the target
-                        bot.Character.HumanoidRootPart.CFrame = CFrame.new(desiredPosition, targetPos)
-    
-                        task.wait(0.1)  -- Small delay for frequent teleportation, keeping the movement smooth
+                        task.wait(0.1)  -- Small delay to keep the teleportation smooth and consistent
                     end
                 end)()
             else
