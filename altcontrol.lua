@@ -181,30 +181,6 @@ if (model) then
     --         end
     --     end
     -- end)
-
-    -- List of available commands
-    local commandList = {
-        --"ex", "example", "debug", -- Example/Debug command
-        "rejoin ", --"rj", --"rej", "reconnect", "r", -- Rejoin command
-        "bring ", -- Bring command
-        --"line <left/right/back/front>", -- Line up bots
-        --"promo", "promote", "share", "brag", "advertise", "ad", -- Promotion command
-        --"index", "ingame", "online", -- Check accounts online
-        --"meatballify", "meatball", "gwibard", -- Custom command
-       -- "end", "stop", "quit", "exit", "close", -- Stop script
-       -- "dance <1/2/3>", "groove", -- Dance command
-       -- "emote <name>", "e <name>", -- Custom emote command
-        "reset ", --"kill", "oof", "die", -- Reset bots
-        "say <message> ", --"chat <message>", "message <message>", "msg <message>", "announce <message>", -- Chat message
-        "follow <target> ",-- "track", "watch", -- Follow command
-        --"unfollow", "untrack", "unwatch", -- Unfollow command
-        "orbit <target> <speed> ", -- Orbit command
-        "unorbit ", -- Stop orbiting
-       -- "swimfollow <target>", -- Swim follow command
-        "ws <speed> ", --"walkspeed <speed>", -- Walk speed command
-       -- "resetws", "defaultws", -- Reset walk speed command
-        "cmds ", -- Display command list
-    }
     
     -- Function to send a private message to the host
     local function sendPrivateMessageToHost(messageText)
@@ -215,8 +191,6 @@ if (model) then
             print("Host not found.")
         end
     end
-    
-
     
     -- Message function modification to send direct messages to the host if required
     local message = function(res, isPrivate)
@@ -236,43 +210,6 @@ if (model) then
             messageRequest:FireServer(tostring(res), "All")
         end
     end
-
-
-
-    -- Function to make bots spin continuously
-    add({"spin"}, function()
-        print("Spin command received")
-        states.spin = true
-    
-        local found = index()
-        if #found == 0 then
-            message("No accounts available to spin.")
-            return
-        end
-    
-        for _, index in ipairs(found) do
-            local bot = getPlayerByUserId(accounts[index])
-            if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") then
-                coroutine.wrap(function()
-                    local botHRP = bot.Character.HumanoidRootPart
-                    while states.spin do
-                        botHRP.CFrame = botHRP.CFrame * CFrame.Angles(0, math.rad(10), 0)
-                        task.wait(0.05)
-                    end
-                end)()
-            else
-                print("Bot character is missing necessary parts.")
-            end
-        end
-        message("Bots are now spinning.")
-    end)
-    
-    -- Function to stop spinning
-    add({"stopspin"}, function()
-        print("Stop spin command received")
-        states.spin = false
-        message("Bots have stopped spinning.")
-    end)
     
     -- Table to keep track of active orbit coroutines for each bot
     local orbitCoroutines = {}
@@ -459,6 +396,41 @@ if (model) then
         end
     end)
 
+ -- Function to make bots spin continuously
+    add({"spin"}, function()
+        print("Spin command received")
+        states.spin = true
+    
+        local found = index()
+        if #found == 0 then
+            message("No accounts available to spin.")
+            return
+        end
+    
+        for _, index in ipairs(found) do
+            local bot = getPlayerByUserId(accounts[index])
+            if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") then
+                coroutine.wrap(function()
+                    local botHRP = bot.Character.HumanoidRootPart
+                    while states.spin do
+                        botHRP.CFrame = botHRP.CFrame * CFrame.Angles(0, math.rad(10), 0)
+                        task.wait(0.05)
+                    end
+                end)()
+            else
+                print("Bot character is missing necessary parts.")
+            end
+        end
+        message("Bots are now spinning.")
+    end)
+    
+    -- Function to stop spinning
+    add({"stopspin"}, function()
+        print("Stop spin command received")
+        states.spin = false
+        message("Bots have stopped spinning.")
+    end)
+    
     -- Table to track the original walkspeed of each bot for resetting purposes
     local defaultWalkSpeeds = {}
     
@@ -495,12 +467,6 @@ if (model) then
                 end
             end
         end
-    end)
-
-    -- Command to display all available commands in private chat
-    add({"cmds"}, function()
-        local commandMessage = "Available Commands:\n" .. table.concat(commandList, "\n")
-        message(commandMessage)
     end)
     
     -- Reset WalkSpeed Command to reset the walk speed to default values
