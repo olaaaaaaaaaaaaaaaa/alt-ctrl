@@ -70,11 +70,5 @@ This document provides an overview of the available commands for managing bots i
 ## Movement Commands
 
 - **Movement Controls**
-  - `,swimfollow <target>`: Swim while following a target.
   - `,ws <speed>`, `,walkspeed <speed>`: Set the bot's walk speed.
   - `,resetws`, `,defaultws`: Reset walk speed to default settings.
-
-## Display Commands
-
-- **Command Overview**
-  - `,cmds`: Displays the complete list of commands available.
