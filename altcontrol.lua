@@ -521,7 +521,58 @@ if (model) then
             end
         end
     end)
+    -- Command to make the bot stand behind the target
+    add({ "stand" }, function(...)
+        print("Stand command received") -- Debugging statement
+        states.track = true  -- Enable tracking state to initiate movement
     
+        local args = {...}
+        table.remove(args, 1)
+    
+        local target = find(tostring(table.concat(args, " ")))
+    
+        if not target then
+            message("Target not found.") -- Notify if the target isn't found
+            print("Target not found") -- Debugging statement
+            return
+        end
+    
+        local found = index()
+        if #found == 0 then
+            message("No accounts available to stand.") -- If no accounts are found
+            print("No accounts found") -- Debugging statement
+            return
+        end
+    
+        print("Standing behind target:", target.Name) -- Debugging statement
+    
+        for _, index in ipairs(found) do
+            local bot = players:GetPlayerByUserId(accounts[index])
+            if bot and bot.Character and bot.Character.HumanoidRootPart then
+                coroutine.wrap(function()
+                    while states.track do
+                        local targetPos = target.Character.HumanoidRootPart.Position
+                        local offsetPos = targetPos - target.Character.HumanoidRootPart.CFrame.LookVector * 3 -- Keep a fixed distance behind
+    
+                        -- Floating animation variables
+                        local floatHeight = 2  -- Height of floating above the ground
+                        local floatSpeed = 2   -- Speed of the bobbing effect
+                        local offset = Vector3.new(0, math.sin(tick() * floatSpeed) * 0.5 + floatHeight, 0)  -- Oscillate up and down
+    
+                        -- Move the bot to the position with floating effect
+                        bot.Character.Humanoid:MoveTo(offsetPos + offset)
+                        bot.Character.Humanoid.MoveToFinished:Wait()
+    
+                        task.wait(0.1)  -- Small delay to keep it responsive
+                    end
+                end)()
+            else
+                message("Bot or target character is missing necessary parts.") -- Notify if there are missing components
+                print("Bot or target humanoid root part missing") -- Debugging statement
+            end
+        end
+    end)
+
     -- Follow player Command to follow the player
     add({ "follow", "track", "watch" }, function(...)
         print("Follow command received") -- Debugging statement
@@ -586,8 +637,10 @@ if (model) then
         end
     end)
     
-    add({ "unfollow", "untrack", "unwatch" }, function()
+    -- Command to make the bot stop tracking or standing
+    add({ "unfollow", "untrack", "unwatch", "standdown" }, function()
         states.track = false
+        print("Tracking stopped") -- Debugging statement
     end)
 
     
