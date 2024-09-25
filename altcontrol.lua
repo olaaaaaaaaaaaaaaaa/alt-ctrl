@@ -602,8 +602,8 @@ if (model) then
             response(input)
         end)
     end
-
-    message("Account Manager modified by Rafa loaded in " .. string.format("%.2f", tick() - dur) .. " seconds.")
+    message("testing")
+    --message("Account Manager modified by Rafa loaded in " .. string.format("%.2f", tick() - dur) .. " seconds.")
 else
     message("Host not found, cannot use Account Manager.")
 end
