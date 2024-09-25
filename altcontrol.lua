@@ -395,41 +395,6 @@ if (model) then
             end
         end
     end)
-
- -- Function to make bots spin continuously
-    add({"spin"}, function()
-        print("Spin command received")
-        states.spin = true
-    
-        local found = index()
-        if #found == 0 then
-            message("No accounts available to spin.")
-            return
-        end
-    
-        for _, index in ipairs(found) do
-            local bot = getPlayerByUserId(accounts[index])
-            if bot and bot.Character and bot.Character:FindFirstChild("HumanoidRootPart") then
-                coroutine.wrap(function()
-                    local botHRP = bot.Character.HumanoidRootPart
-                    while states.spin do
-                        botHRP.CFrame = botHRP.CFrame * CFrame.Angles(0, math.rad(10), 0)
-                        task.wait(0.05)
-                    end
-                end)()
-            else
-                print("Bot character is missing necessary parts.")
-            end
-        end
-        message("Bots are now spinning.")
-    end)
-    
-    -- Function to stop spinning
-    add({"stopspin"}, function()
-        print("Stop spin command received")
-        states.spin = false
-        message("Bots have stopped spinning.")
-    end)
     
     -- Table to track the original walkspeed of each bot for resetting purposes
     local defaultWalkSpeeds = {}
@@ -488,7 +453,7 @@ if (model) then
         end
     end)
 
-    -- Command to make the bot teleport and float behind the host
+   -- Command to make the bot float behind the host without walking or following
     add({ "stand" }, function()
         print("Stand command received") -- Debugging statement
         states.track = true  -- Enable tracking state
@@ -500,25 +465,24 @@ if (model) then
             return
         end
     
-        print("Standing and teleporting behind the host") -- Debugging statement
+        print("Standing and floating behind the host") -- Debugging statement
     
         for i, index in ipairs(found) do
             local bot = players:GetPlayerByUserId(accounts[index])
             if bot and bot.Character and bot.Character.HumanoidRootPart then
                 coroutine.wrap(function()
                     while states.track do
-                        -- Calculate position behind the host with slight floating effect
+                        -- Calculate the fixed position behind the host
                         local hostPos = model.Character.HumanoidRootPart.CFrame
-                        local offset = CFrame.new((i - (#found / 2) - 0.5) * 4, math.sin(tick() * 2) * 0.5 + 2, -3) -- Adjust floating height and offset
+                        local behindOffset = CFrame.new(0, 2, -5) -- Adjust to stay 5 studs behind and 2 studs above
     
-                        -- Tween the bot smoothly to the position behind the host
-                        tween:Create(
-                            bot.Character.HumanoidRootPart,
-                            TweenInfo.new(0.25, Enum.EasingStyle.Sine),
-                            { CFrame = hostPos * offset }
-                        ):Play()
+                        -- Add a floating/bobbing effect (slight vertical movement)
+                        local bobbingOffset = Vector3.new(0, math.sin(tick() * 2) * 0.5, 0)
     
-                        task.wait(0.1)  -- Small delay to keep the teleportation smooth and consistent
+                        -- Set the bot's position behind the host with the floating effect
+                        bot.Character.HumanoidRootPart.CFrame = hostPos * behindOffset + bobbingOffset
+    
+                        task.wait(0.1)  -- Small delay to keep the floating effect smooth
                     end
                 end)()
             else
