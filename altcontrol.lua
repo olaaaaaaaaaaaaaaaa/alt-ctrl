@@ -453,7 +453,7 @@ if (model) then
         end
     end)
 
-   -- Command to make the bot float behind the host without walking or following
+  -- Command to make the bot float behind the host without walking or constant teleporting
     add({ "stand" }, function()
         print("Stand command received") -- Debugging statement
         states.track = true  -- Enable tracking state
@@ -471,18 +471,26 @@ if (model) then
             local bot = players:GetPlayerByUserId(accounts[index])
             if bot and bot.Character and bot.Character.HumanoidRootPart then
                 coroutine.wrap(function()
+                    local lastPos = nil -- Variable to track the last known position of the player
                     while states.track do
-                        -- Calculate the fixed position behind the host
+                        -- Calculate position behind the host
                         local hostPos = model.Character.HumanoidRootPart.CFrame
-                        local behindOffset = CFrame.new(0, 2, -5) -- Adjust to stay 5 studs behind and 2 studs above
+                        local behindOffset = CFrame.new(0, 2, -5) -- Fixed position: 5 studs behind and 2 studs above
     
                         -- Add a floating/bobbing effect (slight vertical movement)
                         local bobbingOffset = Vector3.new(0, math.sin(tick() * 2) * 0.5, 0)
     
-                        -- Set the bot's position behind the host with the floating effect
-                        bot.Character.HumanoidRootPart.CFrame = hostPos * behindOffset + bobbingOffset
+                        -- Get the current player position
+                        local newPos = (hostPos * behindOffset).Position
     
-                        task.wait(0.1)  -- Small delay to keep the floating effect smooth
+                        -- Move the bot only if the player has moved a noticeable distance
+                        if not lastPos or (newPos - lastPos).magnitude > 0.5 then
+                            -- Set the bot's position with the floating effect
+                            bot.Character.HumanoidRootPart.CFrame = CFrame.new(newPos + bobbingOffset)
+                            lastPos = newPos -- Update the last known position
+                        end
+    
+                        task.wait(0.1)  -- Small delay to make updates smooth
                     end
                 end)()
             else
@@ -602,7 +610,7 @@ if (model) then
             response(input)
         end)
     end
-    message("testing")
+    message("testing stand")
     --message("Account Manager modified by Rafa loaded in " .. string.format("%.2f", tick() - dur) .. " seconds.")
 else
     message("Host not found, cannot use Account Manager.")
